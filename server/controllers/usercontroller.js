@@ -2,6 +2,7 @@ let express = require('express');
 let router = express.Router();
 let sequelize = require('../db');
 let User = sequelize.import('../models/user');
+let bcrypt = require('bcryptjs')
 let jwt = require('jsonwebtoken');
 
 
@@ -11,7 +12,7 @@ router.post('/createuser', function(req, res){
 
     User.create({
         username: username,
-        passwordhash: pass
+        passwordhash: bcrypt.hashSync(pass, 10)
 
     }).then(
         function createSuccess(user) {
@@ -29,5 +30,22 @@ router.post('/createuser', function(req, res){
         }
     );
 });
+
+router.post('/signin', function(req, res){
+    User.findOne( { where: { username: req.body.user.username} } )
+    .then(
+        function(user) {
+            if(user){
+                
+                bcrypt.compare(req.body.user.password, use.passwordhash, function(err, matches){
+                    console.log("The value matches:", matches)
+                })
+
+            } else {
+                res.status(500).send({error: "failed to authenticate"})
+            }
+        }
+    )
+})
 
 module.exports = router;
