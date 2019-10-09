@@ -32,20 +32,34 @@ router.post('/createuser', function(req, res){
 });
 
 router.post('/signin', function(req, res){
+    // console.log('test')
     User.findOne( { where: { username: req.body.user.username} } )
     .then(
         function(user) {
+
             if(user){
-                
-                bcrypt.compare(req.body.user.password, use.passwordhash, function(err, matches){
-                    console.log("The value matches:", matches)
-                })
+                // console.log('test2')
+                bcrypt.compare(req.body.user.password, user.passwordhash, function(err, matches){
+                    if(matches) {
+                        let token = jwt.sign({id: user.id}, process.env.JWT_SECRET, {expiresIn: 60*60*24})
+                        res.json({
+                            user: user,
+                            message: 'successfully authenticated',
+                            sessionToken: token
+                        });
+                    } else {
+                        res.status(502).send({error: 'You failed yo'})
+                    }
+                });
 
             } else {
                 res.status(500).send({error: "failed to authenticate"})
             }
+        },
+        function(err) {
+            res.status(501).send({error: 'you failed'});
         }
-    )
-})
+    );
+});
 
 module.exports = router;
